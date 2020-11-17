@@ -1,0 +1,48 @@
+#%RAML 1.0
+title: rate-api
+
+types:
+  request: !include rateRequest.raml
+  response: !include rateResponse.raml
+  healthcheck: !include healthcheck.raml
+
+/live:
+  get:
+    displayName: used to check liveness of the api
+    responses:
+      200:
+        body:
+          application/json:
+            type: healthcheck
+/ready:
+  get:
+    displayName: used to check readiness of the api
+    responses:
+      200:
+        body:
+          application/json:
+            type: healthcheck
+/health:
+  get:
+    displayName: combined health (liveness & readiness) check 
+    responses:
+      200:
+        body:
+          application/json:
+            type: healthcheck
+/api/rate/{quoteId}:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: request
+  post:
+    body:
+      application/json:
+        type: request
+    responses:
+      200:
+        body:
+          application/json:
+            type: response
