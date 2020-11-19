@@ -1,10 +1,21 @@
 #%RAML 1.0
 title: rate-api
-
+version: 1.0.0
+mediaType: 
+- application/json
+traits:
+  client-id-required:
+    headers:
+      client_id:
+        type: string
+      client_secret:
+        type: string
 types:
-  request: !include rateRequest.raml
-  response: !include rateResponse.raml
+  rateRequest: !include rateRequest.raml
+  rateResponse: !include rateResponse.raml
   healthcheck: !include healthcheck.raml
+  getRateQuoteResponse: !include getRateQuoteResponse.raml
+  apiErrorResponse: !include apiErrorResponse.raml
 
 /live:
   get:
@@ -14,6 +25,15 @@ types:
         body:
           application/json:
             type: healthcheck
+            example: | 
+              {
+                "status" : "application live!!!",
+                "checks": 
+                [
+                  "Container",
+                  "Cache"
+                ]
+              }
 /ready:
   get:
     displayName: used to check readiness of the api
@@ -22,6 +42,15 @@ types:
         body:
           application/json:
             type: healthcheck
+            example: | 
+              {
+                "status" : "application ready!!!",
+                "checks": 
+                [
+                  "Content",
+                  "DataBase"
+                ]
+              }
 /health:
   get:
     displayName: combined health (liveness & readiness) check 
@@ -30,19 +59,84 @@ types:
         body:
           application/json:
             type: healthcheck
+            example: | 
+              {
+                "status" : "application healthy!!!",
+                "checks": 
+                [
+                  "CacheService",
+                  "Database Connector",
+                  "MQ"
+                ]
+              }
 /api/rate/{quoteId}:
   get:
     responses:
       200:
         body:
           application/json:
-            type: request
+            type: getRateQuoteResponse
+            example: !include getRateQuoteResponseExample.json
+      400:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include badRequestResponse.json
+      401:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include unauthorizedErrorResponse.json
+      500:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include internalServerErrorResponse.json
   post:
     body:
       application/json:
-        type: request
+        type: rateRequest
     responses:
       200:
         body:
           application/json:
-            type: response
+            type: rateResponse
+            example: !include rateResponseExample.json
+      400:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include badRequestResponse.json
+      401:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include unauthorizedErrorResponse.json
+      500:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include internalServerErrorResponse.json
+  delete:
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            example: | 
+              {"status" : "Operation Successful"}
+      400:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include badRequestResponse.json
+      401:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include unauthorizedErrorResponse.json
+      500:
+        body:
+          application/json:
+            type: apiErrorResponse
+            example: !include internalServerErrorResponse.json
