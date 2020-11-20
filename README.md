@@ -8,6 +8,7 @@ It is a quick reference guide to understand usages of key components & capabilit
 This example demonstrates creating a Rate API for NEION App Use Case, which is used to collect and update coverages information, invokes underwriting before rate and returns response accordingly. Using this API, along with the above mentioned features we will be able to secure user to only fetch/update coverages they are part of. In order to process these requests, the use case uses Mule to invoke HTTP requests to system API's and other sources to fetch the details
 
 At the end of this course, students should be able to:
+
 •	Describe the benefits of application networks and API-led connectivity.
 •	Use Anypoint Exchange as a central repository for the discovery and reuse of assets. 
 •	Use Flow Designer to build integration apps that consume APIs from Exchange and transform data.
@@ -41,7 +42,7 @@ At the end of this course, students should be able to:
 
 ### `Create an account` ###
 
-https://docs.mulesoft.com/anypoint-platform-administration/creating-an-account
+https://anypoint.mulesoft.com/login/signup
 
 ##  RATE API Spec Design
 
