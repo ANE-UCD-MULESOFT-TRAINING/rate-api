@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
     <http:listener-config name="rate-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
     <apikit:config name="rate-api-config" api="rate-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <flow name="rate-api-main">
+    <mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="33ad15a5-f1c8-47df-a748-1ced232f0f48" >
+		<mongo:connection-string-connection connectionString="mongodb://lrqi_db:lrqi_db_pwd@lrqidb-shard-00-00-wksjy.mongodb.net:27017,lrqidb-shard-00-01-wksjy.mongodb.net:27017,lrqidb-shard-00-02-wksjy.mongodb.net:27017/lrqi?ssl=true&amp;replicaSet=LRQIDB-shard-0&amp;authSource=admin&amp;retryWrites=true" />
+	</mongo:config>
+	<flow name="rate-api-main">
         <http:listener config-ref="rate-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers>#[vars.outboundHeaders default {}]</http:headers>
@@ -123,22 +127,92 @@ output application/json
             </on-error-propagate>
         </error-handler>
     </flow>
-    <flow name="get:\api\rate\(quoteId):rate-api-config">
+    <flow name="get:\live:rate-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "application live!!!",
+  checks: [
+    "Container", 
+    "Cache"
+  ]
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+	<flow name="get:\ready:rate-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "application ready!!!",
+  checks: [
+    "Content", 
+    "DataBase"
+  ]
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+	<flow name="get:\health:rate-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "application healthy!!!",
+  checks: [
+    "CacheService", 
+    "Database Connector", 
+    "MQ"
+  ]
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+	<flow name="get:\api\rate\(quoteId):rate-api-config">
         <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
             <ee:variables>
                 <ee:set-variable variableName="quoteId">attributes.uriParams.'quoteId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <logger level="INFO" message="get:\api\rate\(quoteId):rate-api-config" />
+        <mongo:find-documents doc:name="Find documents" doc:id="5d88747b-3592-408e-bd9f-653b0e396edc" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue" fields="quoteId, bi">
+			<mongo:query><![CDATA[{"quoteId":"335186"}]]></mongo:query>
+		</mongo:find-documents>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
     </flow>
-    <flow name="get:\health:rate-api-config">
-        <logger level="INFO" message="get:\health:rate-api-config" />
-    </flow>
-    <flow name="get:\live:rate-api-config">
-        <logger level="INFO" message="get:\live:rate-api-config" />
-    </flow>
-    <flow name="get:\ready:rate-api-config">
-        <logger level="INFO" message="get:\ready:rate-api-config" />
+	<flow name="delete:\api\rate\(quoteId):rate-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="quoteId">attributes.uriParams.'quoteId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <mongo:remove-documents doc:name="Remove documents" doc:id="30837fd3-c920-4659-88b5-fa7dfdbffff8" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue">
+			<mongo:query ><![CDATA[{"id":"970345422"}]]></mongo:query>
+		</mongo:remove-documents>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Operation Successful"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
     </flow>
     <flow name="post:\api\rate\(quoteId):application\json:rate-api-config">
         <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
@@ -146,21 +220,14 @@ output application/json
                 <ee:set-variable variableName="quoteId">attributes.uriParams.'quoteId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <logger level="INFO" message="post:\api\rate\(quoteId):application\json:rate-api-config" />
-    </flow>
-    <flow name="delete:\api\rate\(quoteId):rate-api-config">
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
-            <ee:variables>
-                <ee:set-variable variableName="quoteId">attributes.uriParams.'quoteId'</ee:set-variable>
-            </ee:variables>
-        </ee:transform>
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+        <mongo:insert-document collectionName="col_lrqi_rate_issue" doc:name="Insert document" doc:id="5d5c3f80-90ba-47eb-a088-0e050ef027b5" config-ref="MongoDB_Config"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-  status: "Operation Successful"
+  id: payload.id
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
