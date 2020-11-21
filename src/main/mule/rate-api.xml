@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
-http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
     <http:listener-config name="rate-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
@@ -177,13 +178,17 @@ output application/json
         </ee:transform>
     </flow>
 	<flow name="get:\api\rate\(quoteId):rate-api-config">
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+        <logger level="INFO" doc:name="Logger" doc:id="bc0f8e75-9979-44dd-a5d4-607ead93b532" message="Incoming quote ID is - #[attributes.uriParams.'quoteId']"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
             <ee:variables>
-                <ee:set-variable variableName="quoteId">attributes.uriParams.'quoteId'</ee:set-variable>
+				<ee:set-variable variableName="findQuery" ><![CDATA[%dw 2.0 
+output application/json 
+---
+{"quoteId": attributes.uriParams.'quoteId'}]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <mongo:find-documents doc:name="Find documents" doc:id="5d88747b-3592-408e-bd9f-653b0e396edc" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue" fields="quoteId, bi">
-			<mongo:query><![CDATA[{"quoteId":"335186"}]]></mongo:query>
+		<mongo:find-documents doc:name="Find documents" doc:id="5d88747b-3592-408e-bd9f-653b0e396edc" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue" fields=",">
+			<mongo:query><![CDATA[#[vars.findQuery]]]></mongo:query>
 		</mongo:find-documents>
 		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
             <ee:message>
@@ -195,13 +200,17 @@ payload]]></ee:set-payload>
         </ee:transform>
     </flow>
 	<flow name="delete:\api\rate\(quoteId):rate-api-config">
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+        <logger level="INFO" doc:name="Logger" doc:id="aee46307-4e4b-480a-a82a-34efb42115aa" message="Incoming quote ID is - #[attributes.uriParams.'quoteId']"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
             <ee:variables>
-                <ee:set-variable variableName="quoteId">attributes.uriParams.'quoteId'</ee:set-variable>
+				<ee:set-variable variableName="deleteQuery" ><![CDATA[%dw 2.0 
+output application/json 
+---
+{"quoteId": attributes.uriParams.'quoteId'}]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <mongo:remove-documents doc:name="Remove documents" doc:id="30837fd3-c920-4659-88b5-fa7dfdbffff8" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue">
-			<mongo:query ><![CDATA[{"id":"970345422"}]]></mongo:query>
+		<mongo:remove-documents doc:name="Remove documents" doc:id="30837fd3-c920-4659-88b5-fa7dfdbffff8" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue">
+			<mongo:query ><![CDATA[#[vars.deleteQuery]]]></mongo:query>
 		</mongo:remove-documents>
 		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
             <ee:message>
@@ -215,19 +224,38 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="post:\api\rate\(quoteId):application\json:rate-api-config">
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
-            <ee:variables>
-                <ee:set-variable variableName="quoteId">attributes.uriParams.'quoteId'</ee:set-variable>
+        <logger level="INFO" doc:name="Logger" doc:id="58ee16e8-4e46-4cd2-a424-d00b352acc42" message="Incoming payload is - #[payload]"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="insertQuery" ><![CDATA[%dw 2.0 
+output application/json 
+---
+{
+	"bi": payload.bi,
+	"col": payload.col,
+	"comp": payload.comp,
+	"id": uuid(),
+	"med": payload.med,
+	"pd": payload.pd,
+	"premium": randomInt(5000),
+	"quoteId": randomInt(1000000),
+	"rerim": payload.rerim,
+	"status": payload.status
+}]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <mongo:insert-document collectionName="col_lrqi_rate_issue" doc:name="Insert document" doc:id="5d5c3f80-90ba-47eb-a088-0e050ef027b5" config-ref="MongoDB_Config"/>
+		<mongo:insert-document collectionName="col_lrqi_rate_issue" doc:name="Insert document" doc:id="5d5c3f80-90ba-47eb-a088-0e050ef027b5" config-ref="MongoDB_Config" target="insertResult">
+			<mongo:document><![CDATA[#[vars.insertQuery]]]></mongo:document>
+		</mongo:insert-document>
 		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-  id: payload.id
+  id: vars.insertResult.id,
+  quoteId: vars.insertResult.quoteId
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
