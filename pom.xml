@@ -13,7 +13,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-		<app.runtime>4.3.0</app.runtime>
+		<app.runtime>4.3.0-20200824</app.runtime>
 		<mule.maven.plugin.version>3.3.5</mule.maven.plugin.version>
 	</properties>
 
@@ -36,6 +36,7 @@
                             <artifactId>mongodb-driver-legacy</artifactId>
                         </sharedLibrary>
                     </sharedLibraries>
+                <classifier>mule-application</classifier>
                 </configuration>
 			</plugin>
 		</plugins>
@@ -70,6 +71,12 @@
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-legacy</artifactId>
             <version>4.0.4</version>
+        </dependency>
+    	<dependency>
+            <groupId>com.mulesoft.modules</groupId>
+            <artifactId>mule-secure-configuration-property-module</artifactId>
+            <version>1.2.3</version>
+            <classifier>mule-plugin</classifier>
         </dependency>
     </dependencies>
 

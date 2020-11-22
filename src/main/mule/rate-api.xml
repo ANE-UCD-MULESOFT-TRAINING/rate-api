@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
     <http:listener-config name="rate-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
     <apikit:config name="rate-api-config" api="rate-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="33ad15a5-f1c8-47df-a748-1ced232f0f48">
-        <mongo:connection-string-connection connectionString="${mongo.connString}" />
+        <mongo:connection-string-connection connectionString="${secure::mongo.connString}" />
     </mongo:config>
     <global-property doc:name="Global Property" doc:id="d60fb8f0-3249-4623-9c3b-a66d80cac634" name="env" value="local" />
 	<configuration-properties doc:name="Configuration properties" doc:id="ec0480a6-1934-4cbd-bf84-3d09889f873a" file="config/${env}.yaml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="d544da9f-07e1-41b5-bdb8-5ef086c27e75" file="config/${env}.yaml" key="${key}" />
 	<flow name="rate-api-main">
         <http:listener config-ref="rate-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -187,7 +189,13 @@ output application/json
 {"quoteId": attributes.uriParams.'quoteId'}]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <mongo:find-documents doc:name="Find documents" doc:id="5d88747b-3592-408e-bd9f-653b0e396edc" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue" fields=",">
+        <logger level="INFO" doc:name="Logger" doc:id="a474b34f-8eb9-46a1-a9da-95bf51ff407c" message="#[%dw 2.0
+
+output application/java
+
+---
+p('secure::mongo.connString')]"/>
+		<mongo:find-documents doc:name="Find documents" doc:id="5d88747b-3592-408e-bd9f-653b0e396edc" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue" fields=",">
             <mongo:query><![CDATA[#[vars.findQuery]]]></mongo:query>
         </mongo:find-documents>
 		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">

@@ -1,2 +1,2 @@
 mongo:
-  connString: "mongodb://lrqi_db:lrqi_db_pwd@lrqidb-shard-00-00-wksjy.mongodb.net:27017,lrqidb-shard-00-01-wksjy.mongodb.net:27017,lrqidb-shard-00-02-wksjy.mongodb.net:27017/lrqi?ssl=true&replicaSet=LRQIDB-shard-0&authSource=admin&retryWrites=true"
+  connString: "![Y6LWi56Um8BEK7o3spZLp40ZNuWdDrkt4ufB377Wv1vnXeBMtzdnMXBZqfAHg+ZK/O+f7N+pwfgyz1Pp+ekxQQ9XVOvBVHL25TGVqlxSczSgLhJYWpCmfSdmXVjGn0EGg7OxZfuhEgStLoqVZgSD9kZhOlcuYiPnEQTpcR9HFzYsmY3HCl+zxhPRiRLakuLAFmCyIahGqedx/vPw6UO9X1PYcDl5VwaV44kPd7l/eosZOJcfMMU6RN9+wbfNIG1FDX511B41OO4OS2VdoYXoyzHTfE1aRPWzukinIcKYJ8eP0MptWy5PVYM2g68VM41v]"
