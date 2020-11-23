@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
     <http:listener-config name="rate-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
@@ -13,12 +14,12 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="d544da9f-07e1-41b5-bdb8-5ef086c27e75" file="config/${env}.yaml" key="${key}" />
 	<flow name="rate-api-main">
         <http:listener config-ref="rate-api-httpListenerConfig" path="/api/*">
-            <http:response statusCode="#[vars.httpStatus default 200]">
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            <http:response statusCode="#[vars.httpStatus default 200]" reasonPhrase="#[vars.reasonPhrase]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
-            <http:error-response statusCode="#[vars.httpStatus default 500]">
-                <http:body>#[payload]</http:body>
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            <http:error-response statusCode="#[vars.httpStatus default 500]" reasonPhrase="#[vars.reasonPhrase default 'InternalServerError']">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
         <apikit:router config-ref="rate-api-config" />
@@ -32,7 +33,8 @@ output application/json
 {message: "Bad request"}]]></ee:set-payload>
                     </ee:message>
                     <ee:variables>
-                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+						<ee:set-variable variableName="reasonPhrase" ><![CDATA["BadRequest"]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
@@ -45,20 +47,25 @@ output application/json
 {message: "Resource not found"}]]></ee:set-payload>
                     </ee:message>
                     <ee:variables>
-                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+						<ee:set-variable variableName="reasonPhrase" ><![CDATA["NotFound"]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
-            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+            <on-error-propagate type="MONGO:PERMISSIONS_DENIED" enableNotifications="true" logException="true">
                 <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
                     <ee:message>
                         <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-{message: "Method not allowed"}]]></ee:set-payload>
+{
+    "title": "Unauthorized !!",
+    "detail": "The user is unauthorized to perform the operation."
+}]]></ee:set-payload>
                     </ee:message>
                     <ee:variables>
-                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[401]]></ee:set-variable>
+						<ee:set-variable variableName="reasonPhrase" ><![CDATA["UnAuthorized"]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
@@ -88,16 +95,20 @@ output application/json
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
-            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+            <on-error-propagate type="ANY" enableNotifications="true" logException="true">
                 <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
                     <ee:message>
                         <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-{message: "Not Implemented"}]]></ee:set-payload>
+{
+    "title": "Internal Server Error",
+    "detail": "An internal server error has occured. Please call XXX-XXX-XXXX for assistance"
+}]]></ee:set-payload>
                     </ee:message>
                     <ee:variables>
-                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
+						<ee:set-variable variableName="reasonPhrase" ><![CDATA["InternalServerError"]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
@@ -189,15 +200,34 @@ output application/json
 {"quoteId": attributes.uriParams.'quoteId'}]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <logger level="INFO" doc:name="Logger" doc:id="a474b34f-8eb9-46a1-a9da-95bf51ff407c" message="#[%dw 2.0
+		<logger level="INFO" doc:name="Logger" doc:id="a474b34f-8eb9-46a1-a9da-95bf51ff407c" message="#[%dw 2.0
 
 output application/java
 
 ---
 p('secure::mongo.connString')]"/>
-		<mongo:find-documents doc:name="Find documents" doc:id="5d88747b-3592-408e-bd9f-653b0e396edc" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue" fields=",">
+		<try doc:name="Try" doc:id="98b7cfb6-4d09-4db8-ab28-cc5e1f158a6b" >
+			<mongo:find-documents doc:name="Find documents" doc:id="5d88747b-3592-408e-bd9f-653b0e396edc" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issuet" fields=",">
             <mongo:query><![CDATA[#[vars.findQuery]]]></mongo:query>
         </mongo:find-documents>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="dc2cb34c-52e1-41b9-954e-d5447af5326d" type="ANY">
+					<ee:transform doc:name="Transform Message" doc:id="de513b76-529c-44fd-ae46-43aadab39779" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "title": error.description,
+    "detail": error.detailedDescription
+}]]></ee:set-payload>
+						</ee:message>
+						<ee:variables >
+						</ee:variables>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
 		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
@@ -229,9 +259,28 @@ output application/json
 }]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <mongo:insert-document collectionName="col_lrqi_rate_issue" doc:name="Insert document" doc:id="5d5c3f80-90ba-47eb-a088-0e050ef027b5" config-ref="MongoDB_Config" target="insertResult">
+		<try doc:name="Try" doc:id="95589236-a74f-4ee9-a971-1c0823945f85" >
+			<mongo:insert-document collectionName="col_lrqi_rate_issue" doc:name="Insert document" doc:id="5d5c3f80-90ba-47eb-a088-0e050ef027b5" config-ref="MongoDB_Config" target="insertResult">
             <mongo:document><![CDATA[#[vars.insertQuery]]]></mongo:document>
         </mongo:insert-document>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="de7ea115-bfb6-4a9c-a195-5640872ed539" type="ANY">
+					<ee:transform doc:name="Transform Message" doc:id="7ceecd8d-19a8-4828-a57b-e9934b0c0597" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "title": error.description,
+    "detail": error.detailedDescription
+}]]></ee:set-payload>
+						</ee:message>
+						<ee:variables >
+						</ee:variables>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
 		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
@@ -254,9 +303,28 @@ output application/json
 {"quoteId": attributes.uriParams.'quoteId'}]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-		<mongo:remove-documents doc:name="Remove documents" doc:id="30837fd3-c920-4659-88b5-fa7dfdbffff8" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue">
+		<try doc:name="Try" doc:id="99d9764a-23ee-4477-8e8c-36580911979e" >
+			<mongo:remove-documents doc:name="Remove documents" doc:id="30837fd3-c920-4659-88b5-fa7dfdbffff8" config-ref="MongoDB_Config" collectionName="col_lrqi_rate_issue">
             <mongo:query><![CDATA[#[vars.deleteQuery]]]></mongo:query>
         </mongo:remove-documents>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fba5c129-df86-4506-b7d4-1c6b87ba7536" >
+					<ee:transform doc:name="Transform Message" doc:id="58c36977-b724-4a2a-b7d0-b751049c3a86" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "title": error.description,
+    "detail": error.detailedDescription
+}]]></ee:set-payload>
+						</ee:message>
+						<ee:variables >
+						</ee:variables>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
 		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
