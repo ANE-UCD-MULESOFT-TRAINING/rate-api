@@ -8,17 +8,10 @@ protocols: [HTTP,HTTPS]
 documentation:
   - title: Documentation for Rate Api
     content: Test Documentation for Rates and Quotes
-traits:
-  client-id-required:
-    headers:
-      client_id:
-        type: string
-        description: Client Id provided by API Manager
-        required: true
-      client_secret:
-        type: string
-        description: Client Secret provided by API Manager
-        required: true
+
+securitySchemes:
+ clientIDrequired: !include securityScheme.raml
+
 types:
   rateRequest: !include rateRequest.raml
   rateResponse: !include rateResponse.raml
@@ -80,9 +73,9 @@ types:
               }
 /rate/{quoteId}:
   get:
+    securedBy:
+    - clientIDrequired
     description: Get Quote Info
-    is:
-      - client-id-required
     responses:
       200:
         body:
@@ -105,9 +98,9 @@ types:
             type: apiErrorResponse
             example: !include internalServerErrorResponse.json
   post:
+    securedBy:
+    - clientIDrequired
     description: Create Quote
-    is:
-      - client-id-required
     body:
       application/json:
         type: rateRequest
@@ -133,9 +126,9 @@ types:
             type: apiErrorResponse
             example: !include internalServerErrorResponse.json
   delete:
+    securedBy:
+    - clientIDrequired
     description: Delete Quote
-    is:
-      - client-id-required
     responses:
       200:
         body:
