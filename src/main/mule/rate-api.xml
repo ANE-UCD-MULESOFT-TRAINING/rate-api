@@ -3,7 +3,7 @@
     <http:listener-config name="rate-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
-    <apikit:config name="rate-api-config" api="rate-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="rate-api-config" api="api\rate-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" disableValidations="true"/>
     <mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="33ad15a5-f1c8-47df-a748-1ced232f0f48">
         <mongo:connection-string-connection connectionString="${mongo.connString}" />
     </mongo:config>
@@ -215,26 +215,17 @@ output application/json
 	"med": payload.med,
 	"pd": payload.pd,
 	"premium": randomInt(5000) as String,
-	"quoteId": randomInt(1000000) as String,
+	"quoteId": attributes.uriParams.'quoteId',
 	"rerim": payload.rerim,
 	"status": payload.status
 }]]></ee:set-variable>
+				<ee:set-variable variableName="quoteId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.uriParams.'quoteId']]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <mongo:insert-document collectionName="col_lrqi_rate_issue" doc:name="Insert document" doc:id="5d5c3f80-90ba-47eb-a088-0e050ef027b5" config-ref="MongoDB_Config" target="insertResult">
-            <mongo:document><![CDATA[#[vars.insertQuery]]]></mongo:document>
-        </mongo:insert-document>
-		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  id: vars.insertResult.id,
-  quoteId: vars.insertResult.quoteId
-}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
+        <flow-ref doc:name="Flow Reference" doc:id="35061bb1-ded8-4027-b947-7bae1993f6d0" name="rate-post-flow"/>
     </flow>
 	<flow name="delete:\rate\(quoteId):rate-api-config">
         <logger level="INFO" doc:name="Logger" doc:id="aee46307-4e4b-480a-a82a-34efb42115aa" message="Incoming quote ID is - #[attributes.uriParams.'quoteId']" />
@@ -256,6 +247,20 @@ output application/json
 ---
 {
   status: "Operation Successful"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<mongo:insert-document collectionName="col_lrqi_rate_issue" doc:name="Insert document" doc:id="5d5c3f80-90ba-47eb-a088-0e050ef027b5" config-ref="MongoDB_Config" target="insertResult">
+            <mongo:document><![CDATA[#[vars.insertQuery]]]></mongo:document>
+        </mongo:insert-document>
+		<ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  id: vars.insertResult.id,
+  quoteId: vars.insertResult.quoteId
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>

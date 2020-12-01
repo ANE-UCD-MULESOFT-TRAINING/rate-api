@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="rate-post-flow" doc:id="98118323-66cb-48a2-9a5e-6c79d72dcace" >
+		<scatter-gather doc:name="Scatter-Gather" doc:id="be935b80-4714-45e7-9221-ca88253306ab" >
+			<route >
+				<set-variable value='#[output application/json
+---
+{
+	searchParam : {
+		quoteId: vars.quoteId
+	},
+	collectionName: "col_lrqi_drivers"
+}]' doc:name="Set Drivers" doc:id="d7b687ca-b14f-4fa2-a0be-163c15aa3458" variableName="query"/>
+				<flow-ref doc:name="Flow Reference" doc:id="157a24ce-1cdb-456c-afab-6ba593d7230e" name="mongo-read-data"/>
+			</route>
+			<route >
+				<set-variable value='#[output application/json
+---
+{
+	searchParam : {
+		quoteId: vars.quoteId
+	},
+	collectionName: "col_lrqi_vehicles"
+}]' doc:name="Set Vehicle" doc:id="068afa33-5f7c-4aea-b606-7f74451cce01" variableName="query" />
+				<flow-ref doc:name="Flow Reference" doc:id="686522a0-280b-401d-8393-811948581d7b" name="mongo-read-data" />
+			</route>
+			<route >
+				<set-variable value='#[output application/json
+---
+{
+	searchParam : {
+		quoteId: vars.quoteId
+	},
+	collectionName: "col_lrqi_incidents"
+}]' doc:name="Set Incidents" doc:id="a788060a-4632-4a76-8060-46f8ceb9c073" variableName="query" />
+				<flow-ref doc:name="Flow Reference" doc:id="7a41b4ec-bdc3-4628-bb6e-6e02bbb3f5e4" name="mongo-read-data" />
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="2c7aeba3-6fb9-4e9e-86c2-13f450a52466" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+var originalPremium = (random() * 1000)
+
+output application/json
+---
+{
+	driver : payload[0].payload[0],
+	vehicles : payload[1].payload[0],
+	incidents: payload[2].payload[0],
+	originalPremium : originalPremium as String {format: "0.00"},
+	calculatedPremium : (originalPremium * (if(payload[0].payload.maritalStatus[0] == "M") (0.98) else (1)) * (if(payload[1].payload.year[0] as Number > 1980) (0.98) else (1))) as String {format: "0.00"},
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="mongo-read-data" doc:id="2214cb26-c911-4eb1-a4ab-834af06121dc" >
+		<mongo:find-documents doc:name="Find documents" doc:id="a2d1ca3a-8288-4715-818a-d3e4d3598f99" config-ref="MongoDB_Config" collectionName="#[vars.query.collectionName]" fields=",">
+			<mongo:query ><![CDATA[#[vars.query.searchParam]]]></mongo:query>
+		</mongo:find-documents>
+		<set-payload value="#[%dw 2.0
+output application/json
+---
+payload]" doc:name="Set Payload" doc:id="e4f221b8-1147-4386-9918-5bfef40ff1eb" />
+	</sub-flow>
+</mule>
