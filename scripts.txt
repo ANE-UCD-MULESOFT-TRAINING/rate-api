@@ -1,0 +1,36 @@
+// MongoDB Playground
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+const database = 'muletraining';
+const collection = 'drivers';
+
+// The current database to use.
+use(database);
+
+db.createCollection(collection);
+
+// Create a new collection.
+db.drivers.insert({"quoteId" : "1", "driverId" : "1", "name" : "Pratik" , "License" : "98TR356", "Age" : "32", "DateOfBirth" : "1990-12-12", "Gender" : "M", "MaritalStatus" : "S"});
+db.drivers.insert({"quoteId" : "2", "driverId" : "2", "name" : "Devaiah" , "License" : "1FDR356", "Age" : "36", "DateOfBirth" : "1986-12-12", "Gender" : "M", "MaritalStatus" : "M"});
+db.drivers.insert({"quoteId" : "3", "driverId" : "3", "name" : "Devaiah" , "License" : "23457CD", "Age" : "36", "DateOfBirth" : "1986-09-12", "Gender" : "F", "MaritalStatus" : "M"});
+db.drivers.insert({"quoteId" : "123", "driverId" : "4", "name" : "Pratik" , "License" : "98TR356", "Age" : "32", "DateOfBirth" : "1990-12-12", "Gender" : "M", "MaritalStatus" : "S"});
+db.drivers.insert({"quoteId" : "123", "driverId" : "5", "name" : "Devaiah" , "License" : "1FDR356", "Age" : "36", "DateOfBirth" : "1986-12-12", "Gender" : "M", "MaritalStatus" : "M"});
+db.drivers.insert({"quoteId" : "123", "driverId" : "6", "name" : "Devaiah" , "License" : "23457CD", "Age" : "36", "DateOfBirth" : "1986-09-12", "Gender" : "F", "MaritalStatus" : "M"});
+
+
+db.createCollection('vehicles');
+
+db.vehicles.insert({"quoteId" : "1",   "year" : "1992" , "vin" : "4Y1SL65848Z411439", "make" : "honda", "model" : "crv"});
+db.vehicles.insert({"quoteId" : "2",   "year" : "2000" , "vin" : "5Y1SL65848Z411439", "make" : "toyota", "model" : "camry"});
+db.vehicles.insert({"quoteId" : "3",   "year" : "2020" , "vin" : "6Y1SL65848Z411439", "make" : "subaru", "model" : "outback"});
+db.vehicles.insert({"quoteId" : "123", "year" : "1992" , "vin" : "7Y1SL65848Z411439", "make" : "honda", "model" : "crv"});
+db.vehicles.insert({"quoteId" : "123", "year" : "2000" , "vin" : "8Y1SL65848Z411439", "make" : "toyota", "model" : "camry"});
+db.vehicles.insert({"quoteId" : "123", "year" : "2020" , "vin" : "9Y1SL65848Z411439", "make" : "subaru", "model" : "outback"});
+
+
+db.createCollection('incidents');
+
+db.incidents.insert({"quoteId" : "1",   "AtFault" : "N" , "incidentDate" : "2019-12-10"});
+db.incidents.insert({"quoteId" : "2",   "AtFault" : "N" , "incidentDate" : "2019-12-10"});
+db.incidents.insert({"quoteId" : "3",   "AtFault" : "N" , "incidentDate" : "2019-12-10"});
+db.incidents.insert({"quoteId" : "123",   "AtFault" : "N" , "incidentDate" : "2019-12-10"});
